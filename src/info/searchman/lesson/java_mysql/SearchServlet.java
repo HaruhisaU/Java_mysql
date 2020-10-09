@@ -20,7 +20,7 @@ public class SearchServlet extends HttpServlet {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	
+
 	//データソースの作成
 	DataSource ds;
 
@@ -59,8 +59,8 @@ public class SearchServlet extends HttpServlet {
 
 		// index.jspで入力したnenの取得
 		String nen = request.getParameter("nen");
-		
-	
+
+
 		try {
 			// JDBC Driver の登録
 			//			Class.forName("com.mysql.jdbc.Driver");
@@ -75,22 +75,22 @@ public class SearchServlet extends HttpServlet {
 			StringBuffer sql = new StringBuffer();
 
 			// sql文 の作成（nameから）
-			sql.append("select id, name, sei, nen, address from shain_table where name like '%");
-			sql.append(name + "%'");
-
+			sql.append("select id, name, sei, nen, address from shain_table where name like ?");
+			pstmt = conn.prepareStatement(new String(sql));
+			
 			// idが選択されている場合は、追加する
 			if (id != "") {
-				sql.append("and id ='" + id + "'");
+				sql.append("and id = ?");
 			}
 
 			// seiが選択されている場合は、追加する
 			if (sei != "") {
-				sql.append("and sei ='" + sei + "'");
+				sql.append("and sei = ?");
 			}
 
 			// nenが選択されている場合は、追加する
 			if (nen != "") {
-				sql.append("and nen ='" + nen + "'");
+				sql.append("and nen = ?");
 			}
 
 			// sql文を表示
@@ -99,9 +99,35 @@ public class SearchServlet extends HttpServlet {
 			// sql文実行準備
 			pstmt = conn.prepareStatement(new String(sql));
 
+			int paramInd = 0;
+			// sql文実行準備
+
+			// nameのバインド
+			if (name != "") {
+				pstmt.setString(++paramInd,  "%" + name + "%" );
+			} else {
+				pstmt.setString(++paramInd, "%" );
+			}
+			
+			// idのバインド
+			if (id != "") {
+				pstmt.setString(++paramInd, id);
+			}
+			
+			// seiのバインド
+			if (sei != "") {
+				pstmt.setString(++paramInd, sei);
+			}
+			
+			// nenのバインド
+			if (nen != "") {
+				pstmt.setString(++paramInd, nen);
+			}
+			
 			// sql文実行
 			pstmt.execute();
-
+						
+			
 			// 実行結果を、ResultSetクラスに代入
 			rset = pstmt.executeQuery();
 
@@ -118,7 +144,7 @@ public class SearchServlet extends HttpServlet {
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			
+
 			String status ="検索に失敗しました。管理者に連絡してください。";					
 			request.setAttribute("status", status);
 			request.getRequestDispatcher("/result.jsp").forward(request, response);
